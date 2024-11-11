@@ -5,17 +5,13 @@ import BookInstance, { IBookInstance }  from '../models/bookinstance';
 
 // Function to get a book by ID
 async function getBook(id: string): Promise<IBook | null> {
-  if (typeof id !== 'string') {
-    return null;
-  }
+
   return Book.findOne({ _id: id }).populate('author').exec();
 }
 
 // Function to get book details
 async function getBookDtl(id: string): Promise<IBookInstance[] | null> {
-  if (typeof id !== 'string') {
-    return null;
-  }
+
   return BookInstance.find({ book: id }).select('imprint status').exec();
 }
 
@@ -43,6 +39,7 @@ export const showBookDtls = async (res: Response, id: string): Promise<void> => 
       copies: copies
     });
   } catch (err) {
+    console.error(err);
     res.status(500).send(`Error fetching book ${id}`);
   }
 };

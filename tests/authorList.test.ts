@@ -1,5 +1,6 @@
 import Author from '../models/author'; // Adjust the import to your Author model path
-import { getAuthorList } from '../pages/authors'; // Adjust the import to your function
+import * as authorsPage from '../pages/authors'; // Import the module to access getAuthorList
+import { getAuthorList , showAllAuthors} from '../pages/authors'; // Adjust the import to your function
 
 describe('getAuthorList', () => {
     afterEach(() => {
@@ -111,5 +112,76 @@ describe('getAuthorList', () => {
 
         // Assert: Verify the result is an empty array
         expect(result).toEqual([]);
+    });
+
+    it('should not throw an error if there are no authors in the database', async() => {
+
+        // Mock the find method to chain with sort
+        const mockFind = jest.fn().mockReturnValue({
+            sort: jest.fn().mockResolvedValue([])
+        });
+
+        // Apply the mock directly to the Author model's `find` function
+        Author.find = mockFind;
+
+        // Act: Call the function to get the authors list
+        const result = await getAuthorList();
+
+        // Assert: Check if the result matches the expected sorted output
+        expect(result).toEqual([]);
+
+        // Verify that `.sort()` was called with the correct parameters
+        expect(mockFind().sort).toHaveBeenCalledWith([['family_name', 'ascending']]);
+    });
+});
+
+
+describe('showAllAuthors', () => {
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
+    it("should send the author list if it's not empty", async () => {
+
+        // Arrange: Mock the response object
+        const mockResponse = {
+            send: jest.fn()
+        };
+
+        // Mock the getAuthorList function to return a list of authors
+        const authorsList = ['Austen, Jane : 1775 - 1817', 'Ghosh, Amitav : 1835 - 1910'];
+        jest.spyOn(authorsPage, 'getAuthorList').mockResolvedValue(authorsList);
+
+        // Act: Call the function to show all authors
+        await showAllAuthors(mockResponse as any);
+
+        // Assert: Verify that the response was sent with the authors list
+        expect(mockResponse.send).toHaveBeenCalledWith(authorsList);
+    });
+
+    it("Should send an error message if the author list is empty", async () => {
+        const mockResponse = {
+            send: jest.fn()
+        };
+
+        // Mock the getAuthorList function to return an empty list
+        jest.spyOn(authorsPage, 'getAuthorList').mockResolvedValue([]);
+        await showAllAuthors(mockResponse as any);
+
+        // Assert: Verify that the response was sent with the authors list
+        expect(mockResponse.send).toHaveBeenCalledWith('No authors found');
+    });
+
+    it("Should send an error message if an error occurs", async () => {
+        const mockResponse = {
+            send: jest.fn()
+        };
+
+        // mock getAuthorList to throw an error
+        jest.spyOn(authorsPage, 'getAuthorList').mockRejectedValue(new Error('Database error'));
+        await showAllAuthors(mockResponse as any);
+        expect(mockResponse.send).toHaveBeenCalledWith('No authors found');
+
     });
 });
