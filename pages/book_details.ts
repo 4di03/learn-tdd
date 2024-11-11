@@ -39,7 +39,6 @@ export const showBookDtls = async (res: Response, id: string): Promise<void> => 
       copies: copies
     });
   } catch (err) {
-    console.error(err);
     res.status(500).send(`Error fetching book ${id}`);
   }
 };
